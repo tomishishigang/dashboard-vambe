@@ -25,10 +25,10 @@ interface Props {
 type Quadrant = "star" | "niche" | "opportunity" | "low";
 
 const QUADRANT_COLORS: Record<Quadrant, { fill: string; stroke: string }> = {
-  star: { fill: "#22c55e", stroke: "#16a34a" },        // green
-  niche: { fill: "#6366f1", stroke: "#4f46e5" },       // indigo
-  opportunity: { fill: "#f59e0b", stroke: "#d97706" },  // amber
-  low: { fill: "#94a3b8", stroke: "#64748b" },          // gray
+  star: { fill: "#22c55e", stroke: "#16a34a" },
+  niche: { fill: "#6366f1", stroke: "#4f46e5" },
+  opportunity: { fill: "#f59e0b", stroke: "#d97706" },
+  low: { fill: "#94a3b8", stroke: "#64748b" },
 };
 
 const QUADRANT_LABELS: Record<Quadrant, string> = {
@@ -37,6 +37,9 @@ const QUADRANT_LABELS: Record<Quadrant, string> = {
   opportunity: "Oportunidad",
   low: "Bajo potencial",
 };
+
+/** Only these quadrants get visible labels — the rest show on hover */
+const LABELED_QUADRANTS: Set<Quadrant> = new Set(["star", "opportunity"]);
 
 interface BubbleEntry {
   name: string;
@@ -48,103 +51,74 @@ interface BubbleEntry {
   closed: number;
   avgVolume: number;
   quadrant: Quadrant;
-}
-
-interface LabelPos {
-  dx: number;
-  dy: number;
-  anchor: "middle" | "start" | "end";
+  showLabel: boolean;
 }
 
 /**
- * Simple collision avoidance for scatter labels.
- * Groups points that are close together and fans out their labels.
+ * Apply horizontal jitter to separate points with the same x value.
+ * Groups by x, then offsets each item in the group symmetrically around x.
  */
-function computeLabelPositions(data: BubbleEntry[]): Map<string, LabelPos> {
-  const positions = new Map<string, LabelPos>();
-  const threshold = 1.5; // proximity threshold in data units
-
-  // Sort by x for consistent processing
-  const sorted = [...data].sort((a, b) => a.x - b.x || a.y - b.y);
-
-  // Find clusters of nearby points
-  const assigned = new Set<string>();
-
-  for (let i = 0; i < sorted.length; i++) {
-    if (assigned.has(sorted[i].name)) continue;
-
-    const cluster = [sorted[i]];
-    for (let j = i + 1; j < sorted.length; j++) {
-      if (assigned.has(sorted[j].name)) continue;
-      const dx = Math.abs(sorted[i].x - sorted[j].x);
-      const dy = Math.abs(sorted[i].y - sorted[j].y);
-      if (dx <= threshold && dy <= 15) {
-        cluster.push(sorted[j]);
-      }
-    }
-
-    if (cluster.length === 1) {
-      // No collision — label on top
-      const r = Math.max(8, Math.min(20, cluster[0].total * 3));
-      positions.set(cluster[0].name, { dx: 0, dy: -r - 8, anchor: "middle" });
-      assigned.add(cluster[0].name);
-    } else {
-      // Fan out labels around the cluster
-      const placements: LabelPos[] = [
-        { dx: 0, dy: -28, anchor: "middle" },    // top
-        { dx: 0, dy: 22, anchor: "middle" },      // bottom
-        { dx: 30, dy: -4, anchor: "start" },      // right
-        { dx: -30, dy: -4, anchor: "end" },        // left
-        { dx: 25, dy: -20, anchor: "start" },     // top-right
-        { dx: -25, dy: -20, anchor: "end" },       // top-left
-      ];
-      cluster.forEach((entry, idx) => {
-        positions.set(entry.name, placements[idx % placements.length]);
-        assigned.add(entry.name);
-      });
-    }
+function applyJitter(data: BubbleEntry[], jitterAmount = 0.3): BubbleEntry[] {
+  const byX = new Map<number, BubbleEntry[]>();
+  for (const d of data) {
+    const group = byX.get(d.x) ?? [];
+    group.push(d);
+    byX.set(d.x, group);
   }
 
-  return positions;
+  for (const [, group] of byX) {
+    if (group.length <= 1) continue;
+    // Sort by y so jitter is predictable
+    group.sort((a, b) => a.y - b.y);
+    const step = jitterAmount / Math.max(group.length - 1, 1);
+    const offset = -jitterAmount / 2;
+    group.forEach((entry, i) => {
+      entry.x += offset + step * i;
+    });
+  }
+
+  return data;
 }
 
 export function OpportunityBubble({ data, title, overallCloseRate }: Props) {
   const avgLeads = Math.round(data.reduce((s, d) => s + d.total, 0) / data.length);
 
-  const chartData: BubbleEntry[] = data.map((d) => {
-    const isHighDemand = d.total >= avgLeads;
-    const isHighClose = d.closeRate >= overallCloseRate;
-    let quadrant: Quadrant;
-    if (isHighDemand && isHighClose) quadrant = "star";
-    else if (!isHighDemand && isHighClose) quadrant = "niche";
-    else if (isHighDemand && !isHighClose) quadrant = "opportunity";
-    else quadrant = "low";
+  const chartData: BubbleEntry[] = applyJitter(
+    data.map((d) => {
+      const isHighDemand = d.total >= avgLeads;
+      const isHighClose = d.closeRate >= overallCloseRate;
+      let quadrant: Quadrant;
+      if (isHighDemand && isHighClose) quadrant = "star";
+      else if (!isHighDemand && isHighClose) quadrant = "niche";
+      else if (isHighDemand && !isHighClose) quadrant = "opportunity";
+      else quadrant = "low";
 
-    const label = formatLabel(d.label);
-    return {
-      name: label,
-      shortName: label.length > 14 ? label.slice(0, 12) + "..." : label,
-      x: d.total,
-      y: d.closeRate,
-      z: Math.max(d.total * 150, 300),
-      total: d.total,
-      closed: d.closed,
-      avgVolume: d.avgVolume,
-      quadrant,
-    };
-  });
+      const label = formatLabel(d.label);
+      return {
+        name: label,
+        shortName: label.length > 16 ? label.slice(0, 14) + "…" : label,
+        x: d.total,
+        y: d.closeRate,
+        z: Math.max(d.total * 150, 300),
+        total: d.total,
+        closed: d.closed,
+        avgVolume: d.avgVolume,
+        quadrant,
+        showLabel: LABELED_QUADRANTS.has(quadrant),
+      };
+    })
+  );
 
   const maxLeads = Math.max(...chartData.map((d) => d.x));
-
-  // Simple collision avoidance: assign label positions
-  // Sort by x,y and alternate top/bottom for points that are close
-  const labelPositions = computeLabelPositions(chartData);
 
   return (
     <div>
       <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
       <p className="text-xs text-muted-foreground mb-4">
-        Cada burbuja es una industria. Posición = demanda vs cierre. Color = clasificación estratégica.
+        Cada burbuja es una industria. Labels visibles solo en
+        <span className="font-semibold text-emerald-600"> Estrellas</span> y
+        <span className="font-semibold text-amber-600"> Oportunidades</span>.
+        Hover sobre el resto para ver detalle.
       </p>
 
       <ResponsiveContainer width="100%" height={420}>
@@ -177,10 +151,10 @@ export function OpportunityBubble({ data, title, overallCloseRate }: Props) {
 
           {/* Quadrant dividers */}
           <ReferenceLine y={overallCloseRate} stroke="#6366f1" strokeDasharray="6 4" strokeWidth={1.5}>
-            <Label value={`Close rate prom. ${overallCloseRate}%`} position="right" style={{ fontSize: 10, fill: "#6366f1", fontWeight: 600 }} />
+            <Label value={`Prom. ${overallCloseRate}%`} position="right" style={{ fontSize: 10, fill: "#6366f1", fontWeight: 600 }} />
           </ReferenceLine>
           <ReferenceLine x={avgLeads} stroke="#a5b4fc" strokeDasharray="4 4" strokeWidth={1}>
-            <Label value={`Demanda prom. ${avgLeads}`} position="top" style={{ fontSize: 10, fill: "#818cf8" }} />
+            <Label value={`Prom. ${avgLeads}`} position="top" style={{ fontSize: 10, fill: "#818cf8" }} />
           </ReferenceLine>
 
           <Tooltip
@@ -197,9 +171,16 @@ export function OpportunityBubble({ data, title, overallCloseRate }: Props) {
                     <p className="font-semibold text-foreground">{d.name}</p>
                   </div>
                   <div className="mt-2 space-y-1 text-muted-foreground text-xs">
-                    <p><span className="font-medium text-foreground">{d.total}</span> leads, <span className="font-medium text-foreground">{d.closed}</span> cerrados (<span className="font-medium text-foreground">{d.y}%</span>)</p>
+                    <p>
+                      <span className="font-medium text-foreground">{d.total}</span> leads,{" "}
+                      <span className="font-medium text-foreground">{d.closed}</span> cerrados (
+                      <span className="font-medium text-foreground">{d.y}%</span>)
+                    </p>
                     {d.avgVolume > 0 && (
-                      <p>Vol. promedio: <span className="font-medium text-foreground">{d.avgVolume.toLocaleString()}</span>/mes</p>
+                      <p>
+                        Vol. promedio:{" "}
+                        <span className="font-medium text-foreground">{d.avgVolume.toLocaleString()}</span>/mes
+                      </p>
                     )}
                     <p className="font-semibold mt-1" style={{ color: QUADRANT_COLORS[d.quadrant].stroke }}>
                       {QUADRANT_LABELS[d.quadrant]}
@@ -218,9 +199,9 @@ export function OpportunityBubble({ data, title, overallCloseRate }: Props) {
               const cx = (props.cx as number) ?? 0;
               const cy = (props.cy as number) ?? 0;
               const payload = props.payload as BubbleEntry;
-              const pos = labelPositions.get(payload.name);
-              const r = Math.max(8, Math.min(20, payload.total * 3));
+              const r = Math.max(8, Math.min(22, payload.total * 3));
               const colors = QUADRANT_COLORS[payload.quadrant];
+
               return (
                 <g>
                   <circle
@@ -228,20 +209,47 @@ export function OpportunityBubble({ data, title, overallCloseRate }: Props) {
                     cy={cy}
                     r={r}
                     fill={colors.fill}
-                    fillOpacity={0.7}
+                    fillOpacity={payload.showLabel ? 0.8 : 0.5}
                     stroke={colors.stroke}
-                    strokeWidth={2}
+                    strokeWidth={payload.showLabel ? 2.5 : 1.5}
                   />
-                  <text
-                    x={cx + (pos?.dx ?? 0)}
-                    y={cy + (pos?.dy ?? -r - 8)}
-                    textAnchor={pos?.anchor ?? "middle"}
-                    fontSize={10}
-                    fontWeight={500}
-                    fill="#334155"
-                  >
-                    {payload.shortName}
-                  </text>
+                  {payload.showLabel && (
+                    <>
+                      {/* Connector line */}
+                      <line
+                        x1={cx}
+                        y1={cy - r}
+                        x2={cx}
+                        y2={cy - r - 10}
+                        stroke={colors.stroke}
+                        strokeWidth={1}
+                        opacity={0.4}
+                      />
+                      {/* Label with background */}
+                      <rect
+                        x={cx - payload.shortName.length * 3.2}
+                        y={cy - r - 26}
+                        width={payload.shortName.length * 6.4}
+                        height={16}
+                        rx={4}
+                        fill="white"
+                        fillOpacity={0.9}
+                        stroke={colors.stroke}
+                        strokeWidth={0.5}
+                        strokeOpacity={0.3}
+                      />
+                      <text
+                        x={cx}
+                        y={cy - r - 14}
+                        textAnchor="middle"
+                        fontSize={10}
+                        fontWeight={600}
+                        fill={colors.stroke}
+                      >
+                        {payload.shortName}
+                      </text>
+                    </>
+                  )}
                 </g>
               );
             }}
@@ -262,12 +270,15 @@ export function OpportunityBubble({ data, title, overallCloseRate }: Props) {
               style={{
                 backgroundColor: QUADRANT_COLORS[key].fill,
                 borderColor: QUADRANT_COLORS[key].stroke,
-                opacity: 0.8,
+                opacity: LABELED_QUADRANTS.has(key) ? 1 : 0.5,
               }}
             />
-            <span className="text-muted-foreground font-medium">{label}</span>
+            <span className={`font-medium ${LABELED_QUADRANTS.has(key) ? "text-foreground" : "text-muted-foreground"}`}>
+              {label}
+            </span>
           </div>
         ))}
+        <span className="text-muted-foreground/60 ml-2">Hover para ver todas</span>
       </div>
     </div>
   );
