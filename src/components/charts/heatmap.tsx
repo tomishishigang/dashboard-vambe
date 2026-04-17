@@ -10,6 +10,8 @@ interface Props<T extends { closed: number } = { closed: number; [key: string]: 
   title: string;
   rowLabel?: string;
   colLabel?: string;
+  /** Sort columns alphabetically/chronologically instead of by count */
+  colSortAlpha?: boolean;
 }
 
 interface CellData {
@@ -35,7 +37,7 @@ function getColor(rate: number, total: number): string {
   return `rgba(${r}, ${g}, ${b}, ${0.25 + (total / 16) * 0.55})`;
 }
 
-export function Heatmap<T extends { closed: number }>({ leads, rowKey, colKey, title, rowLabel, colLabel }: Props<T>) {
+export function Heatmap<T extends { closed: number }>({ leads, rowKey, colKey, title, rowLabel, colLabel, colSortAlpha }: Props<T>) {
   const { rows, cols, matrix } = useMemo(() => {
     const rowSet = new Map<string, number>();
     const colSet = new Map<string, number>();
@@ -59,7 +61,10 @@ export function Heatmap<T extends { closed: number }>({ leads, rowKey, colKey, t
       .sort((a, b) => b[1] - a[1])
       .map(([k]) => k);
     const cols = Array.from(colSet.entries())
-      .sort((a, b) => b[1] - a[1])
+      .sort(colSortAlpha
+        ? (a, b) => a[0].localeCompare(b[0])
+        : (a, b) => b[1] - a[1]
+      )
       .map(([k]) => k);
 
     return { rows, cols, matrix: cells };

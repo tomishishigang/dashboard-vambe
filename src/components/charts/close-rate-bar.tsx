@@ -78,6 +78,9 @@ export function CloseRateBar({ data, title, onBarClick, activeFilter }: Props) {
                       close rate ({d.closed}/{d.total})
                     </span>
                   </div>
+                  {onBarClick && (
+                    <p className="text-[10px] text-primary/60 mt-1.5">Click para filtrar</p>
+                  )}
                 </div>
               );
             }}

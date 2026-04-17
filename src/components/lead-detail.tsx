@@ -59,7 +59,7 @@ export function LeadDetail({ lead, onClose }: Props) {
 
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Preocupación Principal
+            Requerimiento Clave
           </p>
           <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-0">
             {formatLabel(lead.preocupacion_principal)}

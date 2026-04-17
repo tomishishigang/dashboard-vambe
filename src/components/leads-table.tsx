@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -18,7 +19,48 @@ interface Props {
   onLeadClick?: (lead: LeadRow) => void;
 }
 
+type SortKey = "nombre" | "industria" | "vendedor" | "canal_descubrimiento" | "volumen_mensual_estimado" | "closed";
+type SortDir = "asc" | "desc";
+
+const COLUMNS: { key: SortKey; label: string; align?: "right" | "center" }[] = [
+  { key: "nombre", label: "Nombre" },
+  { key: "industria", label: "Industria" },
+  { key: "vendedor", label: "Vendedor" },
+  { key: "canal_descubrimiento", label: "Canal" },
+  { key: "volumen_mensual_estimado", label: "Vol./mes", align: "right" },
+  { key: "closed", label: "Estado", align: "center" },
+];
+
+function compareLead(a: LeadRow, b: LeadRow, key: SortKey, dir: SortDir): number {
+  const av = a[key];
+  const bv = b[key];
+  let cmp: number;
+  if (typeof av === "number" && typeof bv === "number") {
+    cmp = av - bv;
+  } else {
+    cmp = String(av).localeCompare(String(bv));
+  }
+  return dir === "asc" ? cmp : -cmp;
+}
+
 export function LeadsTable({ leads, onLeadClick }: Props) {
+  const [sortKey, setSortKey] = useState<SortKey>("nombre");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const sortedLeads = useMemo(
+    () => [...leads].sort((a, b) => compareLead(a, b, sortKey, sortDir)),
+    [leads, sortKey, sortDir],
+  );
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
   if (leads.length === 0) {
     return (
       <div className="text-center py-12">
@@ -32,16 +74,28 @@ export function LeadsTable({ leads, onLeadClick }: Props) {
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/30">
-            <TableHead className="sticky top-0 bg-muted/30 backdrop-blur-sm font-semibold text-xs uppercase tracking-wider">Nombre</TableHead>
-            <TableHead className="sticky top-0 bg-muted/30 backdrop-blur-sm font-semibold text-xs uppercase tracking-wider">Industria</TableHead>
-            <TableHead className="sticky top-0 bg-muted/30 backdrop-blur-sm font-semibold text-xs uppercase tracking-wider">Vendedor</TableHead>
-            <TableHead className="sticky top-0 bg-muted/30 backdrop-blur-sm font-semibold text-xs uppercase tracking-wider">Canal</TableHead>
-            <TableHead className="sticky top-0 bg-muted/30 backdrop-blur-sm font-semibold text-xs uppercase tracking-wider text-right">Vol./mes</TableHead>
-            <TableHead className="sticky top-0 bg-muted/30 backdrop-blur-sm font-semibold text-xs uppercase tracking-wider text-center">Estado</TableHead>
+            {COLUMNS.map((col) => (
+              <TableHead
+                key={col.key}
+                className={`sticky top-0 bg-muted/30 backdrop-blur-sm font-semibold text-xs uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors ${
+                  col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : ""
+                }`}
+                onClick={() => handleSort(col.key)}
+              >
+                <span className="inline-flex items-center gap-1">
+                  {col.label}
+                  {sortKey === col.key && (
+                    <span className="text-primary text-[10px]">
+                      {sortDir === "asc" ? "▲" : "▼"}
+                    </span>
+                  )}
+                </span>
+              </TableHead>
+            ))}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {leads.map((lead) => (
+          {sortedLeads.map((lead) => (
             <TableRow
               key={lead.id}
               className="cursor-pointer hover:bg-primary/5 transition-colors"

@@ -4,6 +4,7 @@ import { createGeminiProvider } from "./gemini";
 import { createOpenRouterProvider } from "./openrouter";
 
 export type { LLMProvider, ProviderConfig };
+export { resolveProviderConfig } from "./config";
 
 export function createProvider(config: ProviderConfig): LLMProvider {
   switch (config.provider) {

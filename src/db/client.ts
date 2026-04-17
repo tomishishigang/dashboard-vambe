@@ -35,15 +35,21 @@ export class LeadRepository {
 
   constructor(filePath: string) {
     this.filePath = filePath;
-    this.leads = existsSync(filePath)
-      ? JSON.parse(readFileSync(filePath, "utf-8"))
-      : [];
+    if (existsSync(filePath)) {
+      try {
+        this.leads = JSON.parse(readFileSync(filePath, "utf-8"));
+      } catch {
+        console.error(`⚠️ Failed to parse ${filePath}, starting with empty data`);
+        this.leads = [];
+      }
+    } else {
+      this.leads = [];
+    }
   }
 
   insert(result: ExtractionResult): void {
-    const id = this.leads.length > 0
-      ? Math.max(...this.leads.map((l) => l.id)) + 1
-      : 1;
+    const lastId = this.leads.reduce((max, l) => Math.max(max, l.id), 0);
+    const id = lastId + 1;
 
     this.leads.push({
       id,

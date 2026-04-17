@@ -13,7 +13,12 @@ interface Props {
 export function InsightCard({ data, title, colorClass, minN = 1 }: Props) {
   const filtered = data.filter((d) => d.total >= minN);
   if (filtered.length === 0) return null;
-  const best = filtered.reduce((a, b) => (a.closeRate > b.closeRate ? a : b));
+  // At equal close rate, prefer the one with more leads (more statistically reliable)
+  const best = filtered.reduce((a, b) =>
+    a.closeRate !== b.closeRate
+      ? (a.closeRate > b.closeRate ? a : b)
+      : (a.total > b.total ? a : b)
+  );
 
   return (
     <div className={`border-l-[3px] ${colorClass} pl-3 py-1`}>

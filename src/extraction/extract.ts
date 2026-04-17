@@ -43,7 +43,9 @@ export async function withRetry<T>(
     try {
       return await fn();
     } catch (err: unknown) {
-      const status = (err as { status?: number }).status;
+      const status = err != null && typeof err === "object" && "status" in err
+        ? (err as { status: number }).status
+        : undefined;
       const isRetryable = status === 429 || status === 503;
       if (!isRetryable || attempt === maxRetries) throw err;
       const delay = Math.min(2 ** attempt * 2000, 30000);

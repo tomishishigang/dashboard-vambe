@@ -1,0 +1,32 @@
+{
+  "insights": [
+    {
+      "titulo": "Optimizar asignación de leads según especialidad",
+      "descripcion": "Toro tiene un close rate del 100% en servicios profesionales (4/4) y escalabilidad (4/4). Reasignar todos los leads de alta complejidad técnica y sector profesional a Toro para maximizar la conversión.",
+      "categoria": "asignacion"
+    },
+    {
+      "titulo": "Pivotar estrategia de adquisición de canales",
+      "descripcion": "Las conferencias y ferias convierten al 83% (10/12) frente al 57% de foros (4/7). Duplicar la inversión en eventos presenciales y reducir la prospección en comunidades digitales.",
+      "categoria": "canal"
+    },
+    {
+      "titulo": "Abandonar vertical de Turismo y Hotelería",
+      "descripcion": "El sector turismo tiene un close rate del 0% (0/3), siendo el único con nula conversión. Suspender campañas de marketing para esta industria y reenfocar esfuerzos en Gastronomía y Educación (100%).",
+      "categoria": "industria"
+    },
+    {
+      "titulo": "Reforzar propuesta de valor en Escalabilidad",
+      "descripcion": "La escalabilidad de volumen es el punto débil con un 50% de cierre (7/14). Es necesario revisar el product-market fit o el pricing para leads que demandan alto volumen de interacciones.",
+      "categoria": "requerimiento"
+    },
+    {
+      "titulo": "Análisis de pérdida en leads de Puma",
+      "descripcion": "Puma tiene la tasa de cierre más baja (56%) y un 0% en escalabilidad (0/3) y compliance (0/1). Implementar un programa de capacitación técnica inmediata o cambiar su perfil de leads asignados.",
+      "categoria": "oportunidad"
+    }
+  ],
+  "generatedAt": "2026-04-17T04:04:11.470Z",
+  "model": "google/gemma-4-31b-it:free",
+  "provider": "openrouter"
+}

@@ -9,7 +9,7 @@ export function calculateCloseRate(closed: number, total: number): number {
 export function formatLabel(key: string): string {
   return key
     .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/(^|\s)\w/g, (c) => c.toUpperCase());
 }
 
 export function safeAverage(values: number[]): number {
