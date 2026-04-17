@@ -26,8 +26,8 @@ function loadInsights(): InsightsData | undefined {
   if (!existsSync(INSIGHTS_PATH)) return undefined;
   try {
     return JSON.parse(readFileSync(INSIGHTS_PATH, "utf-8"));
-  } catch {
-    console.error(`⚠️ Failed to parse ${INSIGHTS_PATH}, skipping insights`);
+  } catch (err) {
+    console.error(`⚠️ Failed to parse ${INSIGHTS_PATH}, skipping insights:`, err instanceof Error ? err.message : err);
     return undefined;
   }
 }

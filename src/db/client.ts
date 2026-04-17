@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import type { ExtractionResult } from "../extraction/extract";
 
 export interface LeadRow {
   id: number;
@@ -29,6 +28,37 @@ export interface LeadRow {
   created_at: string;
 }
 
+/** Shape expected by LeadRepository.insert() — decoupled from extraction layer */
+export interface InsertableResult {
+  raw: {
+    nombre: string;
+    correo: string;
+    telefono: string;
+    fecha_reunion: string;
+    vendedor: string;
+    closed: number;
+    transcripcion: string;
+  };
+  extraction: {
+    industria: string;
+    tamano_empresa: string;
+    caso_uso_primario: string;
+    canal_descubrimiento: string;
+    estacionalidad: string;
+    integraciones_requeridas: string[];
+    sector_regulado: boolean;
+    preocupacion_principal: string;
+    madurez_digital: string;
+    volumen_mensual_estimado: number;
+    confianza_extraccion: number;
+    evidencia: string;
+  };
+  hash: string;
+  promptVersion: string;
+  model: string;
+  provider: string;
+}
+
 export class LeadRepository {
   private leads: LeadRow[];
   private filePath: string;
@@ -38,8 +68,8 @@ export class LeadRepository {
     if (existsSync(filePath)) {
       try {
         this.leads = JSON.parse(readFileSync(filePath, "utf-8"));
-      } catch {
-        console.error(`⚠️ Failed to parse ${filePath}, starting with empty data`);
+      } catch (err) {
+        console.error(`⚠️ Failed to parse ${filePath}, starting with empty data:`, err instanceof Error ? err.message : err);
         this.leads = [];
       }
     } else {
@@ -47,7 +77,7 @@ export class LeadRepository {
     }
   }
 
-  insert(result: ExtractionResult): void {
+  insert(result: InsertableResult): void {
     const lastId = this.leads.reduce((max, l) => Math.max(max, l.id), 0);
     const id = lastId + 1;
 
@@ -99,6 +129,10 @@ export class LeadRepository {
   }
 
   private save(): void {
-    writeFileSync(this.filePath, JSON.stringify(this.leads, null, 2), "utf-8");
+    try {
+      writeFileSync(this.filePath, JSON.stringify(this.leads, null, 2), "utf-8");
+    } catch (err) {
+      throw new Error(`Failed to write ${this.filePath}: ${err instanceof Error ? err.message : err}`);
+    }
   }
 }

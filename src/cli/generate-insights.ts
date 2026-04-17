@@ -1,11 +1,13 @@
 import "dotenv/config";
 import { writeFileSync } from "fs";
 import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { z } from "zod/v4";
 import { DB_PATH, INSIGHTS_PATH } from "../config/paths";
 import { LeadRepository } from "../db/client";
 import { buildDashboardData, calculateCloseRate } from "../lib/analytics";
 import { resolveProviderConfig } from "../extraction/providers/config";
+import type { ProviderConfig } from "../extraction/providers/types";
 
 function buildAnalysisSummary(repo: LeadRepository) {
   const leads = repo.getAll();
@@ -100,34 +102,20 @@ const InsightsResponseSchema = z.object({
   insights: z.array(InsightSchema).min(1),
 });
 
-function createLLMClient(config: ReturnType<typeof resolveProviderConfig>) {
+const DEFAULT_MODELS: Record<string, string> = {
+  openrouter: "google/gemma-4-31b-it:free",
+  openai: "gpt-4o-mini",
+  gemini: "gemini-2.5-flash",
+};
+
+async function callOpenAICompatible(config: ProviderConfig, model: string, summary: string): Promise<string> {
   const baseURLs: Record<string, string> = {
     openrouter: "https://openrouter.ai/api/v1",
   };
-  const defaultModels: Record<string, string> = {
-    openrouter: "google/gemma-4-31b-it:free",
-    openai: "gpt-4o-mini",
-    gemini: "gemini-2.5-flash",
-  };
-
-  return {
-    client: new OpenAI({
-      apiKey: config.apiKey,
-      baseURL: baseURLs[config.provider],
-    }),
-    model: config.model ?? defaultModels[config.provider] ?? "gpt-4o-mini",
-  };
-}
-
-async function main() {
-  console.log("📊 Building analysis summary...");
-  const repo = new LeadRepository(DB_PATH);
-  const summary = buildAnalysisSummary(repo);
-  repo.close();
-
-  console.log("🤖 Generating AI insights...");
-  const config = resolveProviderConfig();
-  const { client, model } = createLLMClient(config);
+  const client = new OpenAI({
+    apiKey: config.apiKey,
+    baseURL: baseURLs[config.provider],
+  });
 
   const completion = await client.chat.completions.create({
     model,
@@ -140,9 +128,44 @@ async function main() {
   });
 
   const text = completion.choices[0]?.message?.content;
-  if (!text) {
-    throw new Error("LLM returned empty response");
-  }
+  if (!text) throw new Error("LLM returned empty response");
+  return text;
+}
+
+async function callGemini(config: ProviderConfig, model: string, summary: string): Promise<string> {
+  const client = new GoogleGenAI({ apiKey: config.apiKey });
+  const response = await client.models.generateContent({
+    model,
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: `${INSIGHTS_PROMPT}\n\n---\n\n${summary}` }],
+      },
+    ],
+    config: {
+      responseMimeType: "application/json",
+      temperature: 0.3,
+    },
+  });
+
+  const text = response.text;
+  if (!text) throw new Error("Gemini returned empty response");
+  return text;
+}
+
+async function main() {
+  console.log("📊 Building analysis summary...");
+  const repo = new LeadRepository(DB_PATH);
+  const summary = buildAnalysisSummary(repo);
+  repo.close();
+
+  console.log("🤖 Generating AI insights...");
+  const config = resolveProviderConfig();
+  const model = config.model ?? DEFAULT_MODELS[config.provider] ?? "gpt-4o-mini";
+
+  const text = config.provider === "gemini"
+    ? await callGemini(config, model, summary)
+    : await callOpenAICompatible(config, model, summary);
 
   let raw: unknown;
   try {
@@ -158,11 +181,15 @@ async function main() {
     console.log(`   ${i + 1}. [${ins.categoria}] ${ins.titulo}`);
   });
 
-  writeFileSync(
-    INSIGHTS_PATH,
-    JSON.stringify({ insights, generatedAt: new Date().toISOString(), model, provider: config.provider }, null, 2),
-  );
-  console.log(`💾 Saved to ${INSIGHTS_PATH}`);
+  try {
+    writeFileSync(
+      INSIGHTS_PATH,
+      JSON.stringify({ insights, generatedAt: new Date().toISOString(), model, provider: config.provider }, null, 2),
+    );
+    console.log(`💾 Saved to ${INSIGHTS_PATH}`);
+  } catch (err) {
+    throw new Error(`Failed to write ${INSIGHTS_PATH}: ${err instanceof Error ? err.message : err}`);
+  }
 }
 
 main().catch((err) => {

@@ -1,2 +1,2 @@
 export { LeadRepository } from "./client";
-export type { LeadRow } from "./client";
+export type { LeadRow, InsertableResult } from "./client";
