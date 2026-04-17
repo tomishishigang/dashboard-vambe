@@ -19,7 +19,7 @@ export interface LeadRow {
   caso_uso_primario: string;
   canal_descubrimiento: string;
   estacionalidad: string;
-  integraciones_requeridas: string; // JSON array
+  integraciones_requeridas: string; // JSON-encoded string array, parsed with parseIntegrations()
   sector_regulado: number;
   preocupacion_principal: string;
   madurez_digital: string;

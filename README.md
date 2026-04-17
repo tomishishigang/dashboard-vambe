@@ -191,7 +191,7 @@ pnpm insights
 - Total leads, industrias cubiertas, close rate general, interacciones promedio mensual
 
 ### Visualizaciones
-- **Bar charts interactivos** (6 tabs): close rate por industria, vendedor, canal, requerimiento clave, tamaño, caso de uso — click en barras para filtrar todo el dashboard
+- **Bar charts interactivos** (8 tabs): close rate por industria, vendedor, canal, requerimiento clave, tamaño, caso de uso, estacionalidad, madurez digital — click en barras para filtrar todo el dashboard
 - **Mapa de oportunidad**: bubble chart con cuadrantes (Estrella / Oportunidad / Nicho / Bajo potencial)
 - **Heatmaps**: Vendedor x Industria, Vendedor x Requerimiento Clave, Vendedor x Mes (cronológico)
 - **Timeline**: leads y cierres por mes (se filtra junto con el resto del dashboard)
@@ -204,6 +204,16 @@ pnpm insights
 - Búsqueda de texto libre → filtra charts, heatmaps, timeline y tabla en tiempo real
 - Columnas de tabla ordenables (click en header para sort asc/desc)
 - Click en un lead → muestra ficha detallada con cita textual de la transcripción
+
+### API
+
+El dashboard expone un endpoint REST:
+
+```
+GET /api/leads → { leads: LeadRow[], dashboard: DashboardData, aiInsights?: InsightsData }
+```
+
+Devuelve los leads, métricas agregadas, y conclusiones IA en un solo payload JSON.
 
 ---
 

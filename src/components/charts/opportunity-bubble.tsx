@@ -202,7 +202,7 @@ export function OpportunityBubble({ data, title, overallCloseRate }: Props) {
           <Scatter
             data={chartData}
             isAnimationActive={false}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Recharts shape prop has no exported type for custom renderers
             shape={(props: any) => {
               const cx = (props.cx as number) ?? 0;
               const cy = (props.cy as number) ?? 0;

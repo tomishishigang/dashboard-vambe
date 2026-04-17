@@ -288,7 +288,7 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
             </div>
             {filter && (
               <p className="text-xs text-muted-foreground">
-                Filtrado por {filter.key.replace(/_/g, " ")}
+                Filtrado por {formatLabel(filter.key)}
               </p>
             )}
           </div>
