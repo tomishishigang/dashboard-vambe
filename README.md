@@ -35,7 +35,7 @@ Las dimensiones fueron seleccionadas iterativamente. Proceso:
 | Estacionalidad | enum (3) | constante, picos_moderados, muy_estacional |
 | Integraciones requeridas | array enum | crm, ecommerce, sistema_citas, ... |
 | Sector regulado | boolean | true si salud, legal o financiero |
-| Preocupación principal | enum (5) | personalizacion, calidad_precision, escalabilidad, ... |
+| Requerimiento clave | enum (5) | personalizacion, calidad_precision, escalabilidad, ... |
 | Madurez digital | enum (2) | alta, media |
 | Volumen mensual estimado | number | Normalizado a interacciones/mes. 0 = no informado |
 
@@ -68,7 +68,13 @@ Se selecciona automáticamente según las variables de entorno. Agregar un nuevo
 
 ### 5. Búsqueda client-side
 
-Para N=60, `Array.filter()` con `String.includes()` sobre los campos relevantes es instantáneo. No se justifica un motor de búsqueda. La búsqueda filtra sobre: nombre, correo, vendedor, industria, canal, preocupación, transcripción y evidencia.
+Para N=60, `Array.filter()` con `String.includes()` sobre los campos relevantes es instantáneo. No se justifica un motor de búsqueda. La búsqueda filtra sobre: nombre, correo, vendedor, industria, canal, requerimiento clave, transcripción y evidencia.
+
+### 6. Conclusiones generadas con IA
+
+Además de la extracción de categorías, el LLM se usa una segunda vez para **analizar los datos agregados** y generar conclusiones estratégicas. Las recomendaciones se pre-generan con `pnpm insights` y se almacenan en `data/insights.json` — el dashboard las renderiza sin llamar al LLM en runtime.
+
+Esto demuestra un uso doble del LLM: (1) extracción estructurada de datos, (2) análisis y recomendaciones de negocio.
 
 ---
 
@@ -76,29 +82,43 @@ Para N=60, `Array.filter()` con `String.includes()` sobre los campos relevantes 
 
 ```
 src/
-├── config/paths.ts            ← Constantes centralizadas
-├── db/client.ts               ← LeadRepository (JSON read/write)
-├── extraction/                ← Pipeline ETL (independiente del frontend)
-│   ├── schema.ts              ← Zod schemas (fuente de verdad)
-│   ├── prompt.ts              ← System prompt versionado (v2.0)
-│   ├── csv-parser.ts          ← CSV → RawLead[]
-│   ├── extract.ts             ← Lógica agnóstica + retry con backoff
-│   ├── providers/             ← Factory pattern: OpenAI, Gemini, OpenRouter
-│   └── run.ts                 ← CLI orchestrator
+├── config/paths.ts              ← Constantes centralizadas
+├── db/client.ts                 ← LeadRepository (JSON read/write)
+├── extraction/                  ← Pipeline ETL (independiente del frontend)
+│   ├── schema.ts                ← Zod schemas (fuente de verdad)
+│   ├── prompt.ts                ← System prompt versionado (v2.0)
+│   ├── csv-parser.ts            ← CSV → RawLead[]
+│   ├── extract.ts               ← Lógica agnóstica + retry con backoff
+│   ├── generate-insights.ts     ← Generación de conclusiones IA
+│   ├── providers/               ← Factory pattern: OpenAI, Gemini, OpenRouter
+│   │   ├── types.ts             ← LLMProvider interface
+│   │   ├── config.ts            ← Resolución de provider desde .env
+│   │   ├── openai.ts            ← Structured outputs
+│   │   ├── gemini.ts            ← JSON schema + Zod
+│   │   ├── openrouter.ts        ← JSON mode + schema en prompt
+│   │   └── index.ts             ← Factory
+│   └── run.ts                   ← CLI orchestrator
 ├── lib/
-│   ├── analytics.ts           ← Business logic (aggregation, metrics)
-│   └── lead-service.ts        ← Service layer (data access + analytics)
+│   ├── analytics.ts             ← Business logic (aggregation, metrics)
+│   └── lead-service.ts          ← Service layer (data access + analytics)
 ├── hooks/
-│   └── use-dashboard-filter.ts ← Estado de filtros + búsqueda
+│   └── use-dashboard-filter.ts  ← Estado de filtros + búsqueda
 ├── components/
-│   ├── dashboard.tsx           ← Orchestrator de UI
-│   ├── charts/                 ← Visualizaciones reutilizables
-│   ├── leads-table.tsx         ← Tabla interactiva
-│   ├── lead-detail.tsx         ← Drill-down de lead
-│   └── status-badge.tsx        ← Componente compartido
-└── app/                        ← Next.js App Router
-    ├── page.tsx                ← Server component (data loading)
-    └── api/leads/route.ts      ← API endpoint
+│   ├── dashboard.tsx            ← Orchestrator de UI
+│   ├── ai-insights.tsx          ← Conclusiones generadas con IA
+│   ├── charts/                  ← Visualizaciones reutilizables
+│   │   ├── close-rate-bar.tsx   ← Bar charts con click-to-filter
+│   │   ├── heatmap.tsx          ← Heatmap genérico
+│   │   ├── opportunity-bubble.tsx ← Bubble chart de cuadrantes
+│   │   ├── timeline-chart.tsx   ← Area chart temporal
+│   │   ├── kpi-cards.tsx        ← Tarjetas de KPI
+│   │   └── insight-card.tsx     ← Insight individual
+│   ├── leads-table.tsx          ← Tabla con sort por columnas
+│   ├── lead-detail.tsx          ← Drill-down de lead
+│   └── status-badge.tsx         ← Componente compartido
+└── app/                         ← Next.js App Router
+    ├── page.tsx                 ← Server component (data loading)
+    └── api/leads/route.ts       ← API endpoint
 ```
 
 **Separación de capas:**
@@ -156,6 +176,9 @@ cp .env.example .env
 # Ejecutar extracción
 pnpm extract          # Procesa las 60 transcripciones
 pnpm extract:sample   # Procesa solo las primeras 3 (para testing)
+
+# Generar conclusiones IA (requiere API key)
+pnpm insights
 ```
 
 ---
@@ -163,19 +186,21 @@ pnpm extract:sample   # Procesa solo las primeras 3 (para testing)
 ## Métricas del Dashboard
 
 ### KPIs
-- Total leads, deals cerrados, close rate general, volumen promedio (solo leads que reportaron)
+- Total leads, industrias cubiertas, close rate general, interacciones promedio mensual
 
 ### Visualizaciones
-- **Bar charts interactivos** (6 tabs): close rate por industria, vendedor, canal, preocupación, tamaño, caso de uso — click para filtrar
+- **Bar charts interactivos** (6 tabs): close rate por industria, vendedor, canal, requerimiento clave, tamaño, caso de uso — click en barras para filtrar todo el dashboard
 - **Mapa de oportunidad**: bubble chart con cuadrantes (Estrella / Oportunidad / Nicho / Bajo potencial)
-- **Heatmaps**: Vendedor x Industria, Vendedor x Preocupación, Vendedor x Mes
-- **Timeline**: leads y cierres por mes
-- **Tabla de leads**: con búsqueda de texto y click para drill-down
+- **Heatmaps**: Vendedor x Industria, Vendedor x Requerimiento Clave, Vendedor x Mes (cronológico)
+- **Timeline**: leads y cierres por mes (se filtra junto con el resto del dashboard)
+- **Conclusiones IA**: 5 recomendaciones estratégicas generadas automáticamente
+- **Tabla de leads**: columnas ordenables, búsqueda de texto, click para drill-down
 - **Lead detail**: ficha completa con las 10 dimensiones + evidencia textual del LLM
 
 ### Interactividad
 - Click en cualquier barra → filtra todo el dashboard por esa dimensión
-- Búsqueda de texto libre → filtra por nombre, industria, vendedor, transcripción
+- Búsqueda de texto libre → filtra charts, heatmaps, timeline y tabla en tiempo real
+- Columnas de tabla ordenables (click en header para sort asc/desc)
 - Click en un lead → muestra ficha detallada con cita textual de la transcripción
 
 ---
@@ -191,5 +216,5 @@ pnpm extract:sample   # Procesa solo las primeras 3 (para testing)
 - **Signal Strength table**: feature importance — qué dimensiones correlacionan más con cierre
 - **Vendor Playbook**: recomendaciones per-vendedor basadas en sus fortalezas/debilidades por vertical
 - **Tests**: golden set de 5 transcripciones con extracciones esperadas para validar el prompt
-- **Error boundary**: página de error si la DB no existe o está corrupta
+- **Error boundary**: página de error si la data no existe o está corrupta
 - **Mobile responsive**: pase completo de responsive para charts
