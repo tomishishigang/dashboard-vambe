@@ -16,7 +16,7 @@ export function LeadDetail({ lead, onClose }: Props) {
   const integraciones = parseIntegrations(lead.integraciones_requeridas);
 
   return (
-    <Card className="border-primary/20 bg-primary/[0.02] shadow-sm">
+    <Card className="border-primary/20 bg-primary/[0.02] shadow-sm h-[420px] overflow-y-auto">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>

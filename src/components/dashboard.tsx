@@ -62,19 +62,6 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
               Análisis de {data.summary.totalLeads} leads extraídos con IA*
             </p>
           </div>
-          {hasActiveFilters && (
-            <div className="flex items-center gap-2">
-              {filter && (
-                <button
-                  onClick={clearFilter}
-                  className="flex items-center gap-2 text-sm bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-lg transition-colors font-medium"
-                >
-                  <span>{filter.value.replace(/_/g, " ")}</span>
-                  <span className="text-primary/60">&times;</span>
-                </button>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Search */}
@@ -111,6 +98,31 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
             Filtra todo el dashboard
           </span>
         </div>
+
+        {/* Active filters */}
+        {hasActiveFilters && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] text-muted-foreground/50">Filtros activos:</span>
+            {searchQuery.trim() && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="flex items-center gap-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 px-2.5 py-1 rounded-md transition-colors font-medium"
+              >
+                Búsqueda: &ldquo;{searchQuery.trim().length > 20 ? searchQuery.trim().slice(0, 20) + "…" : searchQuery.trim()}&rdquo;
+                <span className="text-primary/60">&times;</span>
+              </button>
+            )}
+            {filter && (
+              <button
+                onClick={clearFilter}
+                className="flex items-center gap-1.5 text-xs bg-primary/10 text-primary hover:bg-primary/20 px-2.5 py-1 rounded-md transition-colors font-medium"
+              >
+                {formatLabel(filter.key)}: {formatLabel(filter.value)}
+                <span className="text-primary/60">&times;</span>
+              </button>
+            )}
+          </div>
+        )}
       </header>
 
       {/* KPIs */}
