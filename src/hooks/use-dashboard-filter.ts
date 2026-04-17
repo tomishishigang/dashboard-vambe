@@ -9,8 +9,7 @@ export type FilterKey =
   | "preocupacion_principal"
   | "tamano_empresa"
   | "caso_uso_primario"
-  | "estacionalidad"
-  | "madurez_digital";
+  | "estacionalidad";
 
 export interface ActiveFilter {
   key: FilterKey;

@@ -1,6 +1,6 @@
 # Vambe Lead Intelligence Dashboard
 
-Dashboard interactivo que procesa transcripciones de reuniones de ventas, las categoriza automáticamente con IA, y muestra métricas accionables para un equipo comercial.
+Dashboard interactivo que procesa transcripciones de reuniones de ventas, las categoriza con IA y muestra métricas accionables para un equipo comercial.
 
 **Live:** [dashboard-vambe.vercel.app](https://dashboard-vambe.vercel.app)
 
@@ -10,52 +10,53 @@ Dashboard interactivo que procesa transcripciones de reuniones de ventas, las ca
 
 ### 1. Pivot de "Sales Coaching" a "Lead Intelligence"
 
-Al analizar las transcripciones, se identificó que **no son diálogos reales** entre vendedor y cliente — son monólogos sintéticos del cliente describiendo su empresa y necesidades. No contienen objeciones, manejo de objeciones, ni interacción del vendedor.
+Al analizar las transcripciones, se identificó que no son diálogos reales entre vendedor y cliente — son monólogos del cliente describiendo su empresa y necesidades. No contienen objeciones, manejo de objeciones, ni interacción del vendedor.
 
-En lugar de simular extracciones que la data no soporta (sentiment analysis, coaching, objection playbook), se pivotó hacia **Lead Intelligence**: usar el LLM para enriquecer el perfil del lead y descubrir señales del ICP (Ideal Customer Profile) correlacionadas con cierre de ventas.
+En lugar de forzar extracciones que la data no soporta (sentiment analysis, coaching, objection playbook), se pivotó hacia Lead Intelligence: usar el LLM para enriquecer el perfil del lead y descubrir señales del ICP (Ideal Customer Profile) correlacionadas con cierre de ventas.
 
-Esto es más honesto con la data y más valioso comercialmente: un Head of Sales puede accionar sobre "qué tipo de lead cierra" en vez de "cómo mejorar la conversación".
+Para un Head of Sales esto es más útil: puede accionar sobre "qué tipo de lead cierra" en vez de "cómo mejorar la conversación".
 
 ### 2. Categorías extraídas (10 dimensiones)
 
 Las dimensiones fueron seleccionadas iterativamente:
-1. Lectura manual de ~15 transcripciones para identificar patrones
+1. Lectura manual de ~15 transcripciones para identificar patrones recurrentes
 2. Primera extracción con schema amplio (v1.0 — 16 industrias + "otro", 8 preocupaciones)
-3. Análisis de distribución: se detectó que "otro" capturaba 13% de leads, varias categorías tenían n=1, y preocupaciones similares estaban fragmentadas
+3. Análisis de distribución: "otro" capturaba 13% de leads, varias categorías tenían n=1, preocupaciones similares estaban fragmentadas
 4. Consolidación (v2.0): se eliminaron categorías muertas, se fusionaron preocupaciones solapadas (`mantener_toque_humano` + `personalizacion_tono` → `personalizacion`), y se agregó `servicios_profesionales` para absorber consultorías
 
-**Dimensiones finales y justificación:**
+**¿Por qué estas 10 y no otras?** El criterio fue: cada dimensión debe responder una pregunta que un Head of Sales haría al evaluar su pipeline. "¿Qué vertical cierra más?" → industria. "¿Qué canal trae leads que convierten?" → canal de descubrimiento. "¿A qué tamaño de empresa le vendemos mejor?" → tamaño empresa. Dimensiones que no responden una pregunta accionable no se incluyeron.
 
-| Dimensión | Tipo | Para qué sirve | Visibilidad |
-|---|---|---|---|
-| Industria | enum (14) | Identifica verticales rentables vs no rentables. Permite redirigir marketing y asignar vendedores por vertical. | Charts + Heatmaps + Bubble |
-| Caso de uso primario | enum (6) | Revela qué problema quieren resolver con Vambe (soporte, reservas, cotizaciones). Útil para product-market fit. | Chart |
-| Canal de descubrimiento | enum (7) | Atribución de marketing: qué canales traen leads que cierran. Accionable para decidir dónde invertir budget. | Chart + Insight |
-| Requerimiento clave | enum (5) | Qué le importa más al cliente al evaluar Vambe. Permite adaptar el pitch según la necesidad del lead. | Chart + Heatmap + Insight |
-| Estacionalidad | enum (3) | ¿Leads con picos estacionales cierran distinto? Dato: constantes cierran 76% vs estacionales 50%. | Chart |
-| Volumen mensual estimado | number | Tamaño de la oportunidad en interacciones/mes. 63% no reporta número — se marca "Sin dato". | KPI + Tabla + Detalle |
-| Tamaño empresa | enum (3) | Segmentación de ICP. Con esta data 85% es pyme (baja varianza), pero con datasets mayores discriminaría más. | Chart |
-| Madurez digital | enum (2) | ¿Empresas más digitalizadas cierran más? 78% vs 69%. Baja varianza con N=60, pero relevante a escala. | Chart |
-| Sector regulado | boolean | Derivado de industria (salud/legal/financiero). Redundante con el filtro de industria, por lo que se muestra solo en el detalle del lead. | Solo detalle |
-| Integraciones requeridas | array enum | Qué sistemas necesita integrar el cliente (CRM, tickets, e-commerce). Es un array, no un enum simple, por lo que se muestra en el detalle individual. | Solo detalle |
+**Dimensiones con gráfico propio (7):** tienen distribución suficiente para sacar conclusiones visuales con N=60.
 
-**Nota sobre visibilidad:** Las 8 dimensiones con mayor poder discriminante tienen chart propio en el dashboard. Las 2 restantes (sector regulado e integraciones) se muestran en el detalle individual de cada lead porque son redundantes con industria (sector regulado) o tienen estructura de array que no se presta a un bar chart simple (integraciones). Con un dataset más grande, podrían justificar visualizaciones propias.
+| Dimensión | Tipo | Para qué sirve |
+|---|---|---|
+| Industria | enum (14) | Verticales rentables vs no rentables. Redirigir marketing y asignar vendedores por vertical. |
+| Caso de uso primario | enum (6) | Qué problema quieren resolver con Vambe (soporte, reservas, cotizaciones). Product-market fit. |
+| Canal de descubrimiento | enum (7) | Atribución de marketing: qué canales traen leads que cierran. |
+| Requerimiento clave | enum (5) | Qué le importa más al cliente al evaluar Vambe. Adaptar el pitch. |
+| Estacionalidad | enum (3) | Constantes cierran 76% vs estacionales 50% — señal accionable con distribución 38/18/4. |
+| Volumen mensual estimado | number | Tamaño de la oportunidad en interacciones/mes. 63% no reporta número — se marca "Sin dato". |
+| Tamaño empresa | enum (3) | Segmentación de ICP. 85% pyme (baja varianza), pero la categoría es relevante a mayor escala. |
+
+**Dimensiones sin gráfico — solo en detalle del lead (3):**
+
+| Dimensión | Tipo | Por qué no tiene gráfico |
+|---|---|---|
+| Madurez digital | enum (2) | Solo 2 valores (alta/media) con distribución 85/15. Con N=9 en "alta" y 9pp de diferencia en close rate (78% vs 69%), el gráfico no aporta información confiable. Se mantiene en el perfil del lead porque con un dataset mayor (N>200) y mayor varianza la dimensión sí discriminaría. |
+| Sector regulado | boolean | Derivado de industria (salud/legal/financiero → regulado). Graficarlo duplica información que ya está en el chart de industria. Útil como dato de contexto en la ficha individual. |
+| Integraciones requeridas | array enum | Un lead puede requerir múltiples integraciones (CRM + tickets + e-commerce). Al ser un array, no se mapea a un bar chart de close rate donde cada lead cuenta una sola vez. Con más datos podría tener un chart de frecuencia. |
+
+Las 3 dimensiones sin gráfico se siguen extrayendo con el LLM y se almacenan en cada lead. No se eliminan del schema porque: (1) el costo de extracción es marginal (van en el mismo prompt), (2) enriquecen el perfil individual del lead, y (3) con un dataset más grande justificarían visualizaciones propias.
 
 ### 3. ¿Por qué JSON y no una base de datos?
 
-Con **60 filas y ~90KB de data estática**, una base de datos es overhead injustificado:
-- No hay escrituras en runtime (el dashboard solo lee)
-- No hay queries SQL complejos (toda la agregación es TypeScript)
-- No hay concurrencia
-- `better-sqlite3` requiere binarios nativos → complica el deploy
+60 filas y ~90KB de data estática. No hay escrituras en runtime, no hay queries complejos, no hay concurrencia. Un archivo JSON resuelve todo sin dependencias nativas y con deploy trivial.
 
-Un archivo JSON ofrece lo mismo sin dependencias nativas, con deploy trivial en cualquier plataforma.
-
-**Para escalar a 10k+ leads**: se migraría a SQLite con FTS5 (para full-text search) o un servicio como Meilisearch/Algolia. El `LeadRepository` mantiene la misma interfaz — el cambio es transparente.
+Para escalar a 10k+ leads se migraría a SQLite con FTS5 o un servicio como Meilisearch/Algolia. El `LeadRepository` mantiene la misma interfaz — el cambio es transparente.
 
 ### 4. Provider-agnostic: por qué y cómo
 
-El pipeline de extracción soporta **3 proveedores de LLM** (OpenAI, Gemini, OpenRouter) con una interfaz común:
+El pipeline de extracción soporta 3 proveedores de LLM (OpenAI, Gemini, OpenRouter) con una interfaz común:
 
 ```
 LLMProvider.extract(transcript, systemPrompt) → ExtraccionLead
@@ -74,9 +75,9 @@ Para N=60, `Array.filter()` con `String.includes()` sobre los campos relevantes 
 
 ### 6. Conclusiones generadas con IA
 
-Además de la extracción de categorías, el LLM se usa una segunda vez para **analizar los datos agregados** y generar conclusiones estratégicas. Las recomendaciones se pre-generan con `pnpm insights` y se almacenan en `data/insights.json` — el dashboard las renderiza sin llamar al LLM en runtime.
+Además de la extracción de categorías, el LLM se usa una segunda vez para analizar los datos agregados y generar conclusiones estratégicas. Las recomendaciones se pre-generan con `pnpm insights` y se almacenan en `data/insights.json` — el dashboard las renderiza sin llamar al LLM en runtime.
 
-Esto demuestra un uso doble del LLM: (1) extracción estructurada de datos, (2) análisis y recomendaciones de negocio.
+Dos usos del LLM: (1) extracción estructurada de datos por lead, (2) análisis y recomendaciones sobre el dataset completo.
 
 ---
 
@@ -106,6 +107,7 @@ src/
 ├── hooks/
 │   └── use-dashboard-filter.ts  ← Estado de filtros + búsqueda
 ├── components/
+│   ├── ui/                      ← Primitivas shadcn/ui
 │   ├── dashboard.tsx            ← Orchestrator de UI
 │   ├── ai-insights.tsx          ← Conclusiones generadas con IA
 │   ├── charts/                  ← Visualizaciones reutilizables
@@ -139,7 +141,7 @@ src/
 | TypeScript | 5.9 | Type safety end-to-end |
 | Zod | 4.3 | Validación de schemas + structured outputs |
 | Recharts | 3.8 | Visualizaciones |
-| shadcn/ui | - | Component library |
+| shadcn/ui | 4.2 | Component library |
 | Tailwind CSS | 4.2 | Styling |
 | OpenAI / Gemini / OpenRouter SDK | - | LLM providers |
 | Vercel | - | Deploy |
@@ -162,24 +164,33 @@ pnpm install
 
 # 2. Ejecutar (la data ya está pre-procesada en data/leads.json)
 pnpm dev
+
+# 3. Verificar que compila correctamente
+pnpm build
 ```
 
-Abrir [http://localhost:3000](http://localhost:3000).
+El servidor de desarrollo corre en [http://localhost:3000](http://localhost:3000).
 
 ### Re-procesar las transcripciones (opcional)
 
-Para re-ejecutar la extracción con LLM:
+La data ya viene procesada en `data/leads.json`, pero si se quiere re-ejecutar la extracción con LLM:
 
 ```bash
-# Crear .env con una API key (elegir UNO):
+# 1. Crear .env con una API key
 cp .env.example .env
-# Editar .env con la key correspondiente
+```
 
-# Ejecutar extracción
-pnpm extract          # Procesa las 60 transcripciones
-pnpm extract:sample   # Procesa solo las primeras 3 (para testing)
+Elegir UNO de los 3 providers y descomentar su key en `.env`:
+- **OpenRouter** — el más fácil para probar: tiene modelos gratuitos, no requiere tarjeta de crédito. Crear key en [openrouter.ai/keys](https://openrouter.ai/keys).
+- **OpenAI** — requiere cuenta con créditos.
+- **Gemini** — key gratuita desde [aistudio.google.com](https://aistudio.google.com).
 
-# Generar conclusiones IA (requiere API key)
+```bash
+# 2. Ejecutar extracción
+pnpm extract          # Procesa las 60 transcripciones (~2-3 min)
+pnpm extract:sample   # Procesa solo las primeras 3 (para testing rápido)
+
+# 3. Generar conclusiones IA (requiere la misma API key)
 pnpm insights
 ```
 
@@ -191,7 +202,7 @@ pnpm insights
 - Total leads, industrias cubiertas, close rate general, interacciones promedio mensual
 
 ### Visualizaciones
-- **Bar charts interactivos** (8 tabs): close rate por industria, vendedor, canal, requerimiento clave, tamaño, caso de uso, estacionalidad, madurez digital — click en barras para filtrar todo el dashboard
+- **Bar charts interactivos** (7 tabs): close rate por industria, vendedor, canal, requerimiento clave, tamaño, caso de uso, estacionalidad — click en barras para filtrar todo el dashboard
 - **Mapa de oportunidad**: bubble chart con cuadrantes (Estrella / Oportunidad / Nicho / Bajo potencial)
 - **Heatmaps**: Vendedor x Industria, Vendedor x Requerimiento Clave, Vendedor x Mes (cronológico)
 - **Timeline**: leads y cierres por mes (se filtra junto con el resto del dashboard)
@@ -220,13 +231,13 @@ Devuelve los leads, métricas agregadas, y conclusiones IA en un solo payload JS
 ## Limitaciones y Next Steps
 
 ### Limitaciones de la data
-- **N=60**: cualquier cruce con celdas < 5 debe interpretarse como señal, no conclusión
-- **63% sin volumen**: las transcripciones no siempre incluyen números concretos. El dashboard marca "Sin dato" en vez de 0
-- **Tamaño empresa**: 85% clasificado como "pyme" — la dimensión discrimina poco con esta data
+- **N=60**: cualquier cruce con celdas < 5 debe interpretarse como señal, no conclusión. Esto motivó que 3 dimensiones (madurez digital, sector regulado, integraciones) no tengan gráfico propio — ver justificación en la sección de categorías.
+- **63% sin volumen**: las transcripciones no siempre incluyen números concretos. El dashboard marca "Sin dato" en vez de 0.
+- **Baja varianza en algunas dimensiones**: tamaño empresa (85% pyme) y madurez digital (85% media) discriminan poco con esta muestra. Se mantienen porque a mayor escala serían relevantes.
 
 ### Mejoras futuras
 - **Signal Strength table**: feature importance — qué dimensiones correlacionan más con cierre
 - **Vendor Playbook**: recomendaciones per-vendedor basadas en fortalezas/debilidades por vertical
-- **Tests**: golden set de 5 transcripciones con extracciones esperadas para validar el prompt
+- **Tests**: golden set de 5 transcripciones con extracciones esperadas para validar el prompt (vitest ya configurado)
 - **Error boundary**: página de error si la data no existe o está corrupta
 - **Mobile responsive**: pase completo de responsive para charts

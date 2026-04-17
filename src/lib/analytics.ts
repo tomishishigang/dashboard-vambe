@@ -59,7 +59,6 @@ export interface DashboardData {
   byTamano: MetricGroup[];
   byCasoUso: MetricGroup[];
   byEstacionalidad: MetricGroup[];
-  byMadurezDigital: MetricGroup[];
   timeline: TimelinePoint[];
 }
 
@@ -136,7 +135,6 @@ export function buildDashboardData(leads: LeadRow[]): DashboardData {
     byTamano: groupBy(leads, "tamano_empresa"),
     byCasoUso: groupBy(leads, "caso_uso_primario"),
     byEstacionalidad: groupBy(leads, "estacionalidad"),
-    byMadurezDigital: groupBy(leads, "madurez_digital"),
     timeline: buildTimeline(leads),
   };
 }
