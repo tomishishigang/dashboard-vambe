@@ -10,19 +10,19 @@ Dashboard interactivo que procesa transcripciones de reuniones de ventas, las ca
 
 ### 1. Pivot de "Sales Coaching" a "Lead Intelligence"
 
-Al analizar las transcripciones, identifiqué que **no son diálogos reales** entre vendedor y cliente — son monólogos sintéticos del cliente describiendo su empresa y necesidades. No contienen objeciones, manejo de objeciones, ni interacción del vendedor.
+Al analizar las transcripciones, se identificó que **no son diálogos reales** entre vendedor y cliente — son monólogos sintéticos del cliente describiendo su empresa y necesidades. No contienen objeciones, manejo de objeciones, ni interacción del vendedor.
 
-En lugar de simular extracciones que la data no soporta (sentiment analysis, coaching, objection playbook), pivoté hacia **Lead Intelligence**: usar el LLM para enriquecer el perfil del lead y descubrir señales del ICP (Ideal Customer Profile) correlacionadas con cierre de ventas.
+En lugar de simular extracciones que la data no soporta (sentiment analysis, coaching, objection playbook), se pivotó hacia **Lead Intelligence**: usar el LLM para enriquecer el perfil del lead y descubrir señales del ICP (Ideal Customer Profile) correlacionadas con cierre de ventas.
 
 Esto es más honesto con la data y más valioso comercialmente: un Head of Sales puede accionar sobre "qué tipo de lead cierra" en vez de "cómo mejorar la conversación".
 
 ### 2. Categorías extraídas (10 dimensiones)
 
-Las dimensiones fueron seleccionadas iterativamente. Proceso:
+Las dimensiones fueron seleccionadas iterativamente:
 1. Lectura manual de ~15 transcripciones para identificar patrones
 2. Primera extracción con schema amplio (v1.0 — 16 industrias + "otro", 8 preocupaciones)
-3. Análisis de distribución: detecté que "otro" capturaba 13% de leads, varias categorías tenían n=1, y preocupaciones similares estaban fragmentadas
-4. Consolidación (v2.0): eliminé categorías muertas, fusioné preocupaciones solapadas (`mantener_toque_humano` + `personalizacion_tono` → `personalizacion`), agregué `servicios_profesionales` para absorber consultorías
+3. Análisis de distribución: se detectó que "otro" capturaba 13% de leads, varias categorías tenían n=1, y preocupaciones similares estaban fragmentadas
+4. Consolidación (v2.0): se eliminaron categorías muertas, se fusionaron preocupaciones solapadas (`mantener_toque_humano` + `personalizacion_tono` → `personalizacion`), y se agregó `servicios_profesionales` para absorber consultorías
 
 **Dimensiones finales:**
 
@@ -166,12 +166,12 @@ Abrir [http://localhost:3000](http://localhost:3000).
 
 ### Re-procesar las transcripciones (opcional)
 
-Si querés re-ejecutar la extracción con LLM:
+Para re-ejecutar la extracción con LLM:
 
 ```bash
-# Crear .env con tu API key (elegir UNO):
+# Crear .env con una API key (elegir UNO):
 cp .env.example .env
-# Editar .env con tu key
+# Editar .env con la key correspondiente
 
 # Ejecutar extracción
 pnpm extract          # Procesa las 60 transcripciones
@@ -212,9 +212,9 @@ pnpm insights
 - **63% sin volumen**: las transcripciones no siempre incluyen números concretos. El dashboard marca "Sin dato" en vez de 0
 - **Tamaño empresa**: 85% clasificado como "pyme" — la dimensión discrimina poco con esta data
 
-### Con más tiempo haría
+### Mejoras futuras
 - **Signal Strength table**: feature importance — qué dimensiones correlacionan más con cierre
-- **Vendor Playbook**: recomendaciones per-vendedor basadas en sus fortalezas/debilidades por vertical
+- **Vendor Playbook**: recomendaciones per-vendedor basadas en fortalezas/debilidades por vertical
 - **Tests**: golden set de 5 transcripciones con extracciones esperadas para validar el prompt
 - **Error boundary**: página de error si la data no existe o está corrupta
 - **Mobile responsive**: pase completo de responsive para charts
