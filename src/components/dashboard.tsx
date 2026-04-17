@@ -122,14 +122,14 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
             sublabel: filter ? `de ${data.summary.totalLeads} totales` : undefined,
           },
           {
+            label: "Close Rate",
+            value: `${filteredSummary.closeRate}%`,
+            sublabel: `${filteredSummary.closed} de ${filteredSummary.total}`,
+          },
+          {
             label: "Industrias Cubiertas",
             value: data.byIndustria.length,
             sublabel: `de ${data.summary.totalLeads} leads analizados`,
-          },
-          {
-            label: "Close Rate General",
-            value: `${data.summary.overallCloseRate}%`,
-            sublabel: `${data.summary.totalClosed} de ${data.summary.totalLeads}`,
           },
           {
             label: "Interacciones Prom./Mes",
@@ -216,13 +216,6 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
         </div>
       </Tabs>
 
-      {/* Opportunity Analysis */}
-      <Card className="shadow-sm">
-        <CardContent className="pt-6">
-          <OpportunityBubble data={data.byIndustria} title="Mapa de Oportunidad por Industria" overallCloseRate={data.summary.overallCloseRate} />
-        </CardContent>
-      </Card>
-
       {/* Heatmaps */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <Card className="shadow-sm">
@@ -248,6 +241,13 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
       <Card className="shadow-sm">
         <CardContent className="pt-6">
           <TimelineChart data={filteredTimeline} />
+        </CardContent>
+      </Card>
+
+      {/* Opportunity Analysis */}
+      <Card className="shadow-sm">
+        <CardContent className="pt-6">
+          <OpportunityBubble data={data.byIndustria} title="Mapa de Oportunidad por Industria" overallCloseRate={data.summary.overallCloseRate} />
         </CardContent>
       </Card>
 
