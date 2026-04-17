@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "extract": "tsx src/extraction/run.ts",
-    "extract:sample": "tsx src/extraction/run.ts --sample 3",
-    "insights": "tsx src/extraction/generate-insights.ts"
+    "extract": "tsx src/cli/run.ts",
+    "extract:sample": "tsx src/cli/run.ts --sample 3",
+    "insights": "tsx src/cli/generate-insights.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",

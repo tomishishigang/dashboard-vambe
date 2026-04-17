@@ -87,20 +87,21 @@ Dos usos del LLM: (1) extracción estructurada de datos por lead, (2) análisis 
 src/
 ├── config/paths.ts              ← Constantes centralizadas
 ├── db/client.ts                 ← LeadRepository (JSON read/write)
-├── extraction/                  ← Pipeline ETL (independiente del frontend)
+├── cli/                         ← Scripts CLI (orquestan extraction + db + analytics)
+│   ├── run.ts                   ← Extracción: CSV → LLM → JSON
+│   └── generate-insights.ts     ← Generación de conclusiones IA
+├── extraction/                  ← Pipeline ETL (independiente del frontend y del CLI)
 │   ├── schema.ts                ← Zod schemas (fuente de verdad)
 │   ├── prompt.ts                ← System prompt versionado (v2.0)
 │   ├── csv-parser.ts            ← CSV → RawLead[]
 │   ├── extract.ts               ← Lógica agnóstica + retry con backoff
-│   ├── generate-insights.ts     ← Generación de conclusiones IA
-│   ├── providers/               ← Factory pattern: OpenAI, Gemini, OpenRouter
-│   │   ├── types.ts             ← LLMProvider interface
-│   │   ├── config.ts            ← Resolución de provider desde .env
-│   │   ├── openai.ts            ← Structured outputs
-│   │   ├── gemini.ts            ← JSON schema + Zod
-│   │   ├── openrouter.ts        ← JSON mode + schema en prompt
-│   │   └── index.ts             ← Factory
-│   └── run.ts                   ← CLI orchestrator
+│   └── providers/               ← Factory pattern: OpenAI, Gemini, OpenRouter
+│       ├── types.ts             ← LLMProvider interface
+│       ├── config.ts            ← Resolución de provider desde .env
+│       ├── openai.ts            ← Structured outputs
+│       ├── gemini.ts            ← JSON schema + Zod
+│       ├── openrouter.ts        ← JSON mode + schema en prompt
+│       └── index.ts             ← Factory
 ├── lib/
 │   ├── analytics.ts             ← Business logic (aggregation, metrics)
 │   └── lead-service.ts          ← Service layer (data access + analytics)
@@ -126,8 +127,9 @@ src/
 ```
 
 **Separación de capas:**
-- **Config** → **Service** → **Analytics** → **Components**: dependency direction unidireccional
-- ETL pipeline completamente independiente del frontend
+- **Config** → **DB** → **Service** → **Analytics** → **Components**: dependency direction unidireccional
+- **Extraction** (ETL puro): schema, prompt, providers, lógica de extracción. Sin dependencias del frontend ni de la DB.
+- **CLI**: scripts que orquestan extraction + db + analytics. Son entry points, no lógica de negocio.
 - Zod schema como contrato único: valida la salida del LLM, tipifica TypeScript, y define la estructura de storage
 
 ---

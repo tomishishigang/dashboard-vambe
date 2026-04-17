@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 import { DB_PATH, INSIGHTS_PATH } from "../config/paths";
 import { LeadRepository } from "../db/client";
 import { buildDashboardData, calculateCloseRate } from "../lib/analytics";
-import { resolveProviderConfig } from "./providers/config";
+import { resolveProviderConfig } from "../extraction/providers/config";
 
 function buildAnalysisSummary(repo: LeadRepository) {
   const leads = repo.getAll();

@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { parseLeadsCSV } from "./csv-parser";
-import { extractLead, hashTranscript, withRetry } from "./extract";
-import { createProvider } from "./providers";
-import { resolveProviderConfig } from "./providers/config";
+import { parseLeadsCSV } from "../extraction/csv-parser";
+import { extractLead, hashTranscript, withRetry } from "../extraction/extract";
+import { createProvider } from "../extraction/providers";
+import { resolveProviderConfig } from "../extraction/providers/config";
 import { LeadRepository } from "../db/client";
 import { DB_PATH, CSV_PATH } from "../config/paths";
 
