@@ -1,9 +1,7 @@
 import { readFileSync, existsSync } from "fs";
 import { LeadRepository, type LeadRow } from "@/db";
 import { buildDashboardData, type DashboardData } from "@/lib/analytics";
-import { DB_PATH } from "@/config/paths";
-
-const INSIGHTS_PATH = DB_PATH.replace("leads.json", "insights.json");
+import { DB_PATH, INSIGHTS_PATH } from "@/config/paths";
 
 export interface Insight {
   titulo: string;

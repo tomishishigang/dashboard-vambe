@@ -2,12 +2,10 @@ import "dotenv/config";
 import { writeFileSync } from "fs";
 import OpenAI from "openai";
 import { z } from "zod/v4";
-import { DB_PATH } from "../config/paths";
+import { DB_PATH, INSIGHTS_PATH } from "../config/paths";
 import { LeadRepository } from "../db/client";
 import { buildDashboardData, calculateCloseRate } from "../lib/analytics";
 import { resolveProviderConfig } from "./providers/config";
-
-const INSIGHTS_PATH = DB_PATH.replace("leads.json", "insights.json");
 
 function buildAnalysisSummary(repo: LeadRepository) {
   const leads = repo.getAll();
