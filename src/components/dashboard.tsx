@@ -69,9 +69,7 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">V</span>
-              </div>
+              <img src="/vambe-logo.png" alt="Vambe" className="h-8 w-8 rounded-lg" />
               <h1 className="text-2xl font-bold tracking-tight">Lead Intelligence</h1>
             </div>
             <p className="text-sm text-muted-foreground ml-11">
