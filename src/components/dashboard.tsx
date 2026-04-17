@@ -154,6 +154,9 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
           <TabsTrigger value="preocupacion" className="text-xs">Req. Clave</TabsTrigger>
           <TabsTrigger value="tamano" className="text-xs">Tamaño</TabsTrigger>
           <TabsTrigger value="caso_uso" className="text-xs">Caso de Uso</TabsTrigger>
+          <TabsTrigger value="estacionalidad" className="text-xs">Estacionalidad</TabsTrigger>
+          <TabsTrigger value="madurez" className="text-xs">Madurez Digital</TabsTrigger>
+          <TabsTrigger value="sector" className="text-xs">Sector Regulado</TabsTrigger>
         </TabsList>
         <span className="text-[11px] text-muted-foreground/50 flex items-center gap-1">
           <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,6 +186,15 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
               </TabsContent>
               <TabsContent value="caso_uso" className="mt-0">
                 <CloseRateBar data={data.byCasoUso} title="Close Rate por Caso de Uso" onBarClick={(v) => toggleFilter("caso_uso_primario", v)} activeFilter={filter?.key === "caso_uso_primario" ? filter.value : undefined} />
+              </TabsContent>
+              <TabsContent value="estacionalidad" className="mt-0">
+                <CloseRateBar data={data.byEstacionalidad} title="Close Rate por Estacionalidad" onBarClick={(v) => toggleFilter("estacionalidad", v)} activeFilter={filter?.key === "estacionalidad" ? filter.value : undefined} />
+              </TabsContent>
+              <TabsContent value="madurez" className="mt-0">
+                <CloseRateBar data={data.byMadurezDigital} title="Close Rate por Madurez Digital" onBarClick={(v) => toggleFilter("madurez_digital", v)} activeFilter={filter?.key === "madurez_digital" ? filter.value : undefined} />
+              </TabsContent>
+              <TabsContent value="sector" className="mt-0">
+                <CloseRateBar data={data.bySectorRegulado} title="Close Rate por Sector Regulado" />
               </TabsContent>
             </CardContent>
           </Card>
