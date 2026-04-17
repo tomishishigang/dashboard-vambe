@@ -24,20 +24,22 @@ Las dimensiones fueron seleccionadas iterativamente:
 3. Análisis de distribución: se detectó que "otro" capturaba 13% de leads, varias categorías tenían n=1, y preocupaciones similares estaban fragmentadas
 4. Consolidación (v2.0): se eliminaron categorías muertas, se fusionaron preocupaciones solapadas (`mantener_toque_humano` + `personalizacion_tono` → `personalizacion`), y se agregó `servicios_profesionales` para absorber consultorías
 
-**Dimensiones finales:**
+**Dimensiones finales y justificación:**
 
-| Dimensión | Tipo | Valores |
-|---|---|---|
-| Industria | enum (14) | servicios_profesionales, retail_ecommerce, tecnologia, ... |
-| Tamaño empresa | enum (3) | startup, pyme, mediana |
-| Caso de uso primario | enum (6) | soporte_tecnico, atencion_general, reservas_citas, ... |
-| Canal de descubrimiento | enum (7) | conferencia_feria, referido_colega, contenido_digital, ... |
-| Estacionalidad | enum (3) | constante, picos_moderados, muy_estacional |
-| Integraciones requeridas | array enum | crm, ecommerce, sistema_citas, ... |
-| Sector regulado | boolean | true si salud, legal o financiero |
-| Requerimiento clave | enum (5) | personalizacion, calidad_precision, escalabilidad, ... |
-| Madurez digital | enum (2) | alta, media |
-| Volumen mensual estimado | number | Normalizado a interacciones/mes. 0 = no informado |
+| Dimensión | Tipo | Para qué sirve | Visibilidad |
+|---|---|---|---|
+| Industria | enum (14) | Identifica verticales rentables vs no rentables. Permite redirigir marketing y asignar vendedores por vertical. | Charts + Heatmaps + Bubble |
+| Caso de uso primario | enum (6) | Revela qué problema quieren resolver con Vambe (soporte, reservas, cotizaciones). Útil para product-market fit. | Chart |
+| Canal de descubrimiento | enum (7) | Atribución de marketing: qué canales traen leads que cierran. Accionable para decidir dónde invertir budget. | Chart + Insight |
+| Requerimiento clave | enum (5) | Qué le importa más al cliente al evaluar Vambe. Permite adaptar el pitch según la necesidad del lead. | Chart + Heatmap + Insight |
+| Estacionalidad | enum (3) | ¿Leads con picos estacionales cierran distinto? Dato: constantes cierran 76% vs estacionales 50%. | Chart |
+| Volumen mensual estimado | number | Tamaño de la oportunidad en interacciones/mes. 63% no reporta número — se marca "Sin dato". | KPI + Tabla + Detalle |
+| Tamaño empresa | enum (3) | Segmentación de ICP. Con esta data 85% es pyme (baja varianza), pero con datasets mayores discriminaría más. | Chart |
+| Madurez digital | enum (2) | ¿Empresas más digitalizadas cierran más? 78% vs 69%. Baja varianza con N=60, pero relevante a escala. | Chart |
+| Sector regulado | boolean | Derivado de industria (salud/legal/financiero). Redundante con el filtro de industria, por lo que se muestra solo en el detalle del lead. | Solo detalle |
+| Integraciones requeridas | array enum | Qué sistemas necesita integrar el cliente (CRM, tickets, e-commerce). Es un array, no un enum simple, por lo que se muestra en el detalle individual. | Solo detalle |
+
+**Nota sobre visibilidad:** Las 8 dimensiones con mayor poder discriminante tienen chart propio en el dashboard. Las 2 restantes (sector regulado e integraciones) se muestran en el detalle individual de cada lead porque son redundantes con industria (sector regulado) o tienen estructura de array que no se presta a un bar chart simple (integraciones). Con un dataset más grande, podrían justificar visualizaciones propias.
 
 ### 3. ¿Por qué JSON y no una base de datos?
 
