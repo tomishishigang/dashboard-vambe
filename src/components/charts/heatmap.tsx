@@ -10,7 +10,7 @@ interface Props<T extends { closed: number } = { closed: number; [key: string]: 
   title: string;
   rowLabel?: string;
   colLabel?: string;
-  /** Sort columns alphabetically/chronologically instead of by count */
+  /** Sort columns alphabetically instead of by count (also works chronologically for YYYY-MM format) */
   colSortAlpha?: boolean;
 }
 

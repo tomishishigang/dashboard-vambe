@@ -11,8 +11,11 @@ function buildAnalysisSummary(repo: LeadRepository) {
   const leads = repo.getAll();
   const data = buildDashboardData(leads);
 
-  // Build cross-tabulation: vendor x industry
-  const vendorIndustry: Record<string, Record<string, { total: number; closed: number }>> = {};
+  interface CrossTabCell { total: number; closed: number }
+  type CrossTab = Record<string, Record<string, CrossTabCell>>;
+
+  // Build cross-tabulations: vendor x industry, vendor x concern
+  const vendorIndustry: CrossTab = {};
   for (const lead of leads) {
     if (!vendorIndustry[lead.vendedor]) vendorIndustry[lead.vendedor] = {};
     if (!vendorIndustry[lead.vendedor][lead.industria]) vendorIndustry[lead.vendedor][lead.industria] = { total: 0, closed: 0 };
@@ -20,8 +23,7 @@ function buildAnalysisSummary(repo: LeadRepository) {
     if (lead.closed) vendorIndustry[lead.vendedor][lead.industria].closed++;
   }
 
-  // Build cross-tabulation: vendor x concern
-  const vendorConcern: Record<string, Record<string, { total: number; closed: number }>> = {};
+  const vendorConcern: CrossTab = {};
   for (const lead of leads) {
     if (!vendorConcern[lead.vendedor]) vendorConcern[lead.vendedor] = {};
     if (!vendorConcern[lead.vendedor][lead.preocupacion_principal]) vendorConcern[lead.vendedor][lead.preocupacion_principal] = { total: 0, closed: 0 };

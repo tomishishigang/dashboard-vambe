@@ -60,7 +60,6 @@ export interface DashboardData {
   byCasoUso: MetricGroup[];
   byEstacionalidad: MetricGroup[];
   byMadurezDigital: MetricGroup[];
-  bySectorRegulado: MetricGroup[];
   timeline: TimelinePoint[];
 }
 
@@ -138,9 +137,6 @@ export function buildDashboardData(leads: LeadRow[]): DashboardData {
     byCasoUso: groupBy(leads, "caso_uso_primario"),
     byEstacionalidad: groupBy(leads, "estacionalidad"),
     byMadurezDigital: groupBy(leads, "madurez_digital"),
-    bySectorRegulado: groupBy(leads, "sector_regulado", (l) =>
-      l.sector_regulado ? "Regulado" : "No regulado"
-    ),
     timeline: buildTimeline(leads),
   };
 }
