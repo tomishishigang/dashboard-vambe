@@ -14,7 +14,7 @@ import { LeadsTable } from "@/components/leads-table";
 import { AIInsights } from "@/components/ai-insights";
 import { LeadDetail } from "@/components/lead-detail";
 import { useDashboardFilter } from "@/hooks/use-dashboard-filter";
-import { formatLabel, calculateCloseRate, type DashboardData, type TimelinePoint } from "@/lib/analytics";
+import { formatLabel, buildTimeline, type DashboardData, type TimelinePoint } from "@/lib/analytics";
 import type { InsightsData } from "@/lib/lead-service";
 import type { LeadRow } from "@/db";
 
@@ -43,24 +43,10 @@ export function Dashboard({ data, leads, aiInsights }: Props) {
     [filteredLeads],
   );
 
-  const filteredTimeline: TimelinePoint[] = useMemo(() => {
-    const months = new Map<string, { total: number; closed: number }>();
-    for (const lead of filteredLeads) {
-      const month = lead.fecha_reunion.slice(0, 7);
-      const entry = months.get(month) ?? { total: 0, closed: 0 };
-      entry.total++;
-      if (lead.closed === 1) entry.closed++;
-      months.set(month, entry);
-    }
-    return Array.from(months.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, d]) => ({
-        month,
-        total: d.total,
-        closed: d.closed,
-        closeRate: calculateCloseRate(d.closed, d.total),
-      }));
-  }, [filteredLeads]);
+  const filteredTimeline = useMemo(
+    () => buildTimeline(filteredLeads),
+    [filteredLeads],
+  );
 
   return (
     <div className="space-y-8">

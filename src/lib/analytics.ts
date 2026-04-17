@@ -91,7 +91,7 @@ function groupBy(leads: LeadRow[], key: keyof LeadRow, labelFn?: (lead: LeadRow)
     .sort((a, b) => b.total - a.total);
 }
 
-function buildTimeline(leads: LeadRow[]): TimelinePoint[] {
+export function buildTimeline(leads: LeadRow[]): TimelinePoint[] {
   const months = new Map<string, { total: number; closed: number }>();
 
   for (const lead of leads) {

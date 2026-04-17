@@ -81,6 +81,14 @@ function applyJitter(data: BubbleEntry[], jitterAmount = 0.3): BubbleEntry[] {
 }
 
 export function OpportunityBubble({ data, title, overallCloseRate }: Props) {
+  if (data.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-sm text-muted-foreground">No hay datos para mostrar.</p>
+      </div>
+    );
+  }
+
   const avgLeads = Math.round(data.reduce((s, d) => s + d.total, 0) / data.length);
 
   const chartData: BubbleEntry[] = applyJitter(

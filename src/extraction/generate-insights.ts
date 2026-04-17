@@ -91,7 +91,7 @@ Responde ÚNICAMENTE con un JSON válido (sin markdown) con esta estructura:
 const InsightSchema = z.object({
   titulo: z.string(),
   descripcion: z.string(),
-  categoria: z.string(),
+  categoria: z.enum(["asignacion", "canal", "industria", "requerimiento", "oportunidad"]),
 });
 
 const InsightsResponseSchema = z.object({
